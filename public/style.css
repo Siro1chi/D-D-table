@@ -1,0 +1,82 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  background: #0b0d12; color: #e7e7ea;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+#app { position: fixed; inset: 0; }
+
+.panel {
+  background: rgba(20, 22, 30, 0.9);
+  border: 1px solid #2a2e3d;
+  border-radius: 10px;
+  padding: 10px;
+  backdrop-filter: blur(6px);
+}
+
+#topbar {
+  position: fixed; top: 12px; left: 12px;
+  font-size: 13px;
+  display: flex; gap: 8px; align-items: center;
+}
+#topbar b { color: #93c5fd; }
+
+#dice {
+  position: fixed; bottom: 12px; left: 12px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+  max-width: 300px;
+}
+
+#rightCol {
+  position: fixed;
+  top: 12px; right: 12px; bottom: 12px;
+  width: min(300px, 30vw);
+  display: flex; flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+#rightCol > * { pointer-events: auto; }
+
+#spawn {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+
+#chat {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  padding: 8px;
+}
+#chatLog {
+  flex: 1; overflow-y: auto;
+  font-size: 13px; padding-right: 4px;
+}
+#chatLog .msg { margin-bottom: 4px; word-wrap: break-word; }
+#chatLog .msg b { color: #93c5fd; }
+#chatLog .sys { color: #9ca3af; font-style: italic; font-size: 12px; }
+#chatLog .roll { color: #fbbf24; font-weight: 600; }
+
+#chatForm { display: flex; gap: 4px; margin-top: 6px; }
+#chatInput {
+  flex: 1;
+  background: #0f1117; border: 1px solid #2a2e3d; color: #e7e7ea;
+  border-radius: 6px; padding: 6px 8px; font-size: 13px;
+}
+#chatInput:focus { outline: none; border-color: #3b82f6; }
+
+button {
+  background: #1e2130; color: #e7e7ea;
+  border: 1px solid #2a2e3d; border-radius: 6px;
+  padding: 6px 10px; font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+button:hover { background: #2a2e3d; border-color: #3b82f6; }
+
+button.primary { background: #2563eb; border-color: #2563eb; }
+button.primary:hover { background: #1d4ed8; }
+
+button.danger { background: #7f1d1d; border-color: #991b1b; }
+button.danger:hover { background: #991b1b; }

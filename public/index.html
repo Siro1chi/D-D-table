@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D&D Table</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="app"></div>
+
+<div id="topbar" class="panel">
+  <span>Комната: <b id="roomLabel">—</b></span>
+  <button id="copyBtn">Копировать ссылку</button>
+</div>
+
+<div id="dice" class="panel">
+  <button data-dice="4">d4</button>
+  <button data-dice="6">d6</button>
+  <button data-dice="8">d8</button>
+  <button data-dice="10">d10</button>
+  <button data-dice="12">d12</button>
+  <button data-dice="20">d20</button>
+</div>
+
+<div id="rightCol">
+  <div id="spawn" class="panel">
+    <button class="primary" data-spawn="player">+ Игрок</button>
+    <button class="danger" data-spawn="enemy">+ Враг</button>
+    <button id="delBtn">Удалить</button>
+    <button id="mapBtn">Карта…</button>
+    <button id="clearMapBtn">Сброс карты</button>
+    <input type="file" id="mapInput" accept="image/*" hidden>
+  </div>
+
+  <div id="chat" class="panel">
+    <div id="chatLog"></div>
+    <form id="chatForm">
+      <input id="chatInput" placeholder="Сообщение…" autocomplete="off">
+    </form>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "/vendor/three.module.js",
+    "three/addons/controls/OrbitControls.js": "/vendor/OrbitControls.js",
+    "three/addons/loaders/GLTFLoader.js": "/vendor/GLTFLoader.js"
+  }
+}
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/app.js"></script>
+</body>
+</html>
