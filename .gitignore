@@ -1,2 +1,10 @@
 node_modules/ 
 .env 
+ 
+# загруженные карты (это юзер-контент, не код) 
+public/uploads/ 
+ 
+# кеш и всякое 
+.DS_Store 
+Thumbs.db 
+npm-debug.log* 
