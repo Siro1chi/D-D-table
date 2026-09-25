@@ -42,7 +42,6 @@ controls.minDistance = 8;
 controls.maxDistance = 60;
 controls.enableDamping = true;
 
-// Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 const dir = new THREE.DirectionalLight(0xffffff, 1.2);
 dir.position.set(10, 25, 10);
@@ -54,7 +53,6 @@ dir.shadow.camera.top = 30;
 dir.shadow.camera.bottom = -30;
 scene.add(dir);
 
-// Table
 const TABLE_SIZE = 40;
 const textureLoader = new THREE.TextureLoader();
 const tableGeo = new THREE.PlaneGeometry(TABLE_SIZE, TABLE_SIZE);
@@ -64,7 +62,11 @@ table.rotation.x = -Math.PI / 2;
 table.receiveShadow = true;
 scene.add(table);
 
-// Border
+const grid = new THREE.GridHelper(TABLE_SIZE, TABLE_SIZE, 0x2a2e3d, 0x1f2330);
+grid.position.y = 0.01;
+grid.visible = false;
+scene.add(grid);
+
 const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(TABLE_SIZE, 0.2, TABLE_SIZE));
 const border = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0x3b82f6 }));
 border.position.y = 0.1;
@@ -75,6 +77,12 @@ scene.add(border);
 // ============================================================
 const tokens = {};
 const hittables = [];
+
+function defaultStats(type) {
+  return type === 'player'
+    ? { name: 'Игрок',   hp: 10, hpMax: 10, ac: 15, initiative: 0, notes: '' }
+    : { name: 'Враг',    hp: 5,  hpMax: 5,  ac: 12, initiative: 0, notes: '' };
+}
 
 function createTokenMesh(token) {
   const g = new THREE.Group();
@@ -121,6 +129,7 @@ function createTokenMesh(token) {
 function addToken(token) {
   if (tokens[token.id]) return;
   const g = createTokenMesh(token);
+  g.userData.data = { ...token };
   tokens[token.id] = g;
   scene.add(g);
   g.traverse(o => { if (o.isMesh && !o.userData.isRing) hittables.push(o); });
@@ -136,7 +145,10 @@ function removeToken(id) {
   });
   scene.remove(g);
   delete tokens[id];
-  if (selected === id) selected = null;
+  if (selected === id) {
+    selected = null;
+    updateStatsPanel(null);
+  }
 }
 
 // ============================================================
@@ -152,7 +164,59 @@ function setSelected(id) {
   if (id && tokens[id]) {
     tokens[id].traverse(o => { if (o.userData.isRing) o.visible = true; });
   }
+  updateStatsPanel(id);
 }
+
+// ============================================================
+// Stats panel
+// ============================================================
+const statsPanel = document.getElementById('statsPanel');
+const statName = document.getElementById('statName');
+const statType = document.getElementById('statType');
+const statHp = document.getElementById('statHp');
+const statHpMax = document.getElementById('statHpMax');
+const statAc = document.getElementById('statAc');
+const statInit = document.getElementById('statInit');
+const statNotes = document.getElementById('statNotes');
+
+let statsEditing = false; // чтобы не перебивать ввод во время синхронизации
+
+function updateStatsPanel(id) {
+  if (!id || !tokens[id]) {
+    statsPanel.hidden = true;
+    return;
+  }
+  const t = tokens[id].userData.data;
+  statsPanel.hidden = false;
+
+  if (document.activeElement !== statName) statName.value = t.name ?? '';
+  if (document.activeElement !== statHp) statHp.value = t.hp ?? 0;
+  if (document.activeElement !== statHpMax) statHpMax.value = t.hpMax ?? 0;
+  if (document.activeElement !== statAc) statAc.value = t.ac ?? 10;
+  if (document.activeElement !== statInit) statInit.value = t.initiative ?? 0;
+  if (document.activeElement !== statNotes) statNotes.value = t.notes ?? '';
+
+  statType.textContent = t.type === 'player' ? 'Игрок' : 'Враг';
+  statType.className = 'statType ' + (t.type === 'player' ? 'player' : 'enemy');
+}
+
+function emitPatch(patch) {
+  if (!selected) return;
+  socket.emit('token:update', { id: selected, patch });
+  // локально применяем сразу, чтобы не ждать сервера
+  const t = tokens[selected]?.userData.data;
+  if (t) Object.assign(t, patch);
+}
+
+// текстовые поля — на blur/Enter (событие change)
+statName.addEventListener('change', () => emitPatch({ name: statName.value }));
+statNotes.addEventListener('change', () => emitPatch({ notes: statNotes.value }));
+
+// числовые — live (input)
+statHp.addEventListener('input', () => emitPatch({ hp: parseInt(statHp.value, 10) || 0 }));
+statHpMax.addEventListener('input', () => emitPatch({ hpMax: parseInt(statHpMax.value, 10) || 0 }));
+statAc.addEventListener('input', () => emitPatch({ ac: parseInt(statAc.value, 10) || 0 }));
+statInit.addEventListener('input', () => emitPatch({ initiative: parseInt(statInit.value, 10) || 0 }));
 
 // ============================================================
 // Drag
@@ -259,7 +323,8 @@ document.querySelectorAll('[data-spawn]').forEach(btn => {
       id: crypto.randomUUID(),
       type,
       x: (Math.random() * 2 - 1) * half,
-      z: (Math.random() * 2 - 1) * half
+      z: (Math.random() * 2 - 1) * half,
+      ...defaultStats(type),
     };
     socket.emit('spawn', token);
   });
@@ -305,10 +370,7 @@ clearMapBtn.addEventListener('click', () => {
 
 function applyMap(url) {
   if (!url) {
-    if (tableMat.map) {
-      tableMat.map.dispose();
-      tableMat.map = null;
-    }
+    if (tableMat.map) { tableMat.map.dispose(); tableMat.map = null; }
     tableMat.color.set(0x1a1d26);
     tableMat.needsUpdate = true;
     table.scale.set(1, 1, 1);
@@ -322,13 +384,9 @@ function applyMap(url) {
     tableMat.color.set(0xffffff);
     tableMat.needsUpdate = true;
 
-    // подгоняем пропорции карты в квадрат стола
     const aspect = tex.image.width / tex.image.height;
-    if (aspect >= 1) {
-      table.scale.set(1, 1 / aspect, 1);
-    } else {
-      table.scale.set(aspect, 1, 1);
-    }
+    if (aspect >= 1) table.scale.set(1, 1 / aspect, 1);
+    else             table.scale.set(aspect, 1, 1);
   });
 }
 
@@ -420,6 +478,13 @@ socket.on('token:move', ({ id, x, z }) => {
   const g = tokens[id];
   if (!g) return;
   g.userData.target = { x, z };
+});
+
+socket.on('token:update', ({ id, patch }) => {
+  const g = tokens[id];
+  if (!g) return;
+  Object.assign(g.userData.data, patch);
+  if (selected === id) updateStatsPanel(id);
 });
 
 socket.on('token:remove', (id) => removeToken(id));

@@ -14,6 +14,30 @@
   <button id="copyBtn">Копировать ссылку</button>
 </div>
 
+<div id="statsPanel" class="panel" hidden>
+  <div class="statsHead">
+    <input id="statName" class="statInput statName" placeholder="Имя" autocomplete="off">
+    <span id="statType" class="statType"></span>
+  </div>
+
+  <div class="statsRow">
+    <label>HP</label>
+    <input id="statHp" type="number" class="statInput statNum" min="0">
+    <span class="sep">/</span>
+    <input id="statHpMax" type="number" class="statInput statNum" min="0">
+  </div>
+
+  <div class="statsRow">
+    <label>AC</label>
+    <input id="statAc" type="number" class="statInput statNum" min="0">
+    <label class="statLabelRight">Иниц.</label>
+    <input id="statInit" type="number" class="statInput statNum" min="0">
+  </div>
+
+  <label class="statsLabel">Заметки</label>
+  <textarea id="statNotes" class="statInput statNotes" rows="3" placeholder="Состояния, заклинания, лут…"></textarea>
+</div>
+
 <div id="dice" class="panel">
   <button data-dice="4">d4</button>
   <button data-dice="6">d6</button>

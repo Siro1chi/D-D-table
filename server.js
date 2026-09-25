@@ -30,7 +30,6 @@ app.post('/upload', upload.single('map'), (req, res) => {
 });
 
 // ---------- rooms ----------
-// roomId -> { tokens: { id: {...} }, mapUrl: string|null }
 const rooms = {};
 
 function getRoom(id) {
@@ -63,6 +62,15 @@ io.on('connection', (socket) => {
     if (!t) return;
     t.x = x; t.z = z;
     socket.to(room).emit('token:move', { id, x, z });
+  });
+
+  socket.on('token:update', ({ id, patch }) => {
+    const room = socket.data.room;
+    if (!room || !id || !patch) return;
+    const t = getRoom(room).tokens[id];
+    if (!t) return;
+    Object.assign(t, patch);
+    io.to(room).emit('token:update', { id, patch });
   });
 
   socket.on('remove', (id) => {
